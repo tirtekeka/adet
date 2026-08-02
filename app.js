@@ -300,6 +300,23 @@ function renderHome() {
   document.getElementById('mini-badge-text').textContent =
     `Gün ${cd.dayOfCycle} · ${phaseInfo.title}\nSonraki: ${formatShortTR(fmt(cd.nextPeriodStart))}`;
 
+  // Greeting with name
+  const name = settings.userName || 'Nazlı';
+  const greetEl = document.getElementById('greeting-title');
+  if (greetEl) greetEl.textContent = `Merhaba, ${name}! 💕`;
+  const sidebarName = document.getElementById('user-name-sidebar');
+  if (sidebarName) sidebarName.textContent = name;
+
+  // Motivation + Phase Tips + Water
+  renderMotivation(cd.phase);
+  renderPhaseTips(cd.phase);
+  renderWaterTracker();
+
+  // Notification button state
+  if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+    document.getElementById('notif-btn')?.classList.add('active');
+  }
+
   // Recent logs
   renderRecentLogs();
 }
@@ -1190,27 +1207,4 @@ function scheduleNotifications() {
   }
 }
 
-// Patch renderHome to use name + motivation + tips
-const _origRenderHome = renderHome;
-function renderHome() {
-  _origRenderHome();
-
-  // Greeting with name
-  const name = settings.userName || 'Nazlı';
-  const greetEl = document.getElementById('greeting-title');
-  if (greetEl) greetEl.textContent = `Merhaba, ${name}! 💕`;
-  const sidebarName = document.getElementById('user-name-sidebar');
-  if (sidebarName) sidebarName.textContent = name;
-
-  // Motivation & tips
-  const cd = getCycleData();
-  const phase = cd ? cd.phase : 'follicular';
-  renderMotivation(phase);
-  renderPhaseTips(phase);
-  renderWaterTracker();
-
-  // Mark notif button if already granted
-  if (Notification.permission === 'granted') {
-    document.getElementById('notif-btn')?.classList.add('active');
-  }
 }
