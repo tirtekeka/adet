@@ -1226,5 +1226,3 @@ function scheduleNotifications() {
     });
   }
 }
-
-}
