@@ -963,31 +963,6 @@ document.addEventListener('DOMContentLoaded', () => {
 let pinBuffer = '';
 
 function initPin() {
-  // Attach event listeners to PIN buttons (more reliable than inline onclick)
-  const pinMap = {
-    'pk1':'1','pk2':'2','pk3':'3',
-    'pk4':'4','pk5':'5','pk6':'6',
-    'pk7':'7','pk8':'8','pk9':'9',
-    'pk0':'0',
-  };
-  Object.entries(pinMap).forEach(([id, digit]) => {
-    const btn = document.getElementById(id);
-    if (!btn) return;
-    const handler = (e) => { e.preventDefault(); pinInput(digit); };
-    btn.addEventListener('click', handler);
-    btn.addEventListener('touchstart', handler, { passive: false });
-  });
-  const delBtn = document.getElementById('pk-del');
-  if (delBtn) {
-    delBtn.addEventListener('click', (e) => { e.preventDefault(); pinDelete(); });
-    delBtn.addEventListener('touchstart', (e) => { e.preventDefault(); pinDelete(); }, { passive: false });
-  }
-  const skipBtn = document.getElementById('pk-skip');
-  if (skipBtn) {
-    skipBtn.addEventListener('click', (e) => { e.preventDefault(); skipPin(); });
-    skipBtn.addEventListener('touchstart', (e) => { e.preventDefault(); skipPin(); }, { passive: false });
-  }
-
   const pin = settings.userPin;
   const overlay = document.getElementById('pin-overlay');
   if (!pin || pin.length < 4) {
