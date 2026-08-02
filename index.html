@@ -483,9 +483,12 @@
           <div class="setting-row">
             <div class="setting-info">
               <div class="setting-label">Gizlilik PIN'i</div>
-              <div class="setting-desc">4 haneli (boş = kilitsiz)</div>
+              <div class="setting-desc">4 haneli sayı (boş bırak = kilitsiz)</div>
             </div>
-            <input type="password" inputmode="numeric" maxlength="4" class="setting-input" style="width:80px;" id="setting-pin" placeholder="••••" onchange="saveSettings()" />
+            <div style="display:flex;gap:0.5rem;align-items:center">
+              <input type="number" inputmode="numeric" min="0" max="9999" class="setting-input" style="width:90px;" id="setting-pin" placeholder="örn: 1234" onchange="saveSettings()" />
+              <button class="btn-secondary sm" onclick="clearPin()" title="PIN'i kaldır">Kaldır</button>
+            </div>
           </div>
         </div>
       </div>
