@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LunaCycle – Regl & Döngü Takip</title>
+  <title>LunaCycle – Nazlı'nın Döngü Takibi</title>
   <meta name="description" content="LunaCycle ile regl döngünüzü, yumurtlama döneminizi ve hamilelik olasılığınızı kolayca takip edin." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -11,6 +11,35 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
+<!-- PIN LOCK SCREEN -->
+<div class="pin-overlay" id="pin-overlay">
+  <div class="pin-card">
+    <div class="pin-moon">🌙</div>
+    <h2 class="pin-title">LunaCycle</h2>
+    <p class="pin-subtitle" id="pin-subtitle">Giriş yapmak için PIN'inizi girin</p>
+    <div class="pin-dots" id="pin-dots">
+      <div class="pin-dot" id="dot-0"></div>
+      <div class="pin-dot" id="dot-1"></div>
+      <div class="pin-dot" id="dot-2"></div>
+      <div class="pin-dot" id="dot-3"></div>
+    </div>
+    <div class="pin-grid">
+      <button class="pin-key" onclick="pinInput('1')">1</button>
+      <button class="pin-key" onclick="pinInput('2')">2</button>
+      <button class="pin-key" onclick="pinInput('3')">3</button>
+      <button class="pin-key" onclick="pinInput('4')">4</button>
+      <button class="pin-key" onclick="pinInput('5')">5</button>
+      <button class="pin-key" onclick="pinInput('6')">6</button>
+      <button class="pin-key" onclick="pinInput('7')">7</button>
+      <button class="pin-key" onclick="pinInput('8')">8</button>
+      <button class="pin-key" onclick="pinInput('9')">9</button>
+      <button class="pin-key pin-key-skip" onclick="skipPin()">Atla</button>
+      <button class="pin-key" onclick="pinInput('0')">0</button>
+      <button class="pin-key pin-key-del" onclick="pinDelete()">⌫</button>
+    </div>
+  </div>
+</div>
 
 <!-- Animated background blobs -->
 <div class="bg-blobs">
@@ -46,9 +75,14 @@
       </a></li>
     </ul>
     <div class="sidebar-footer">
+      <div class="user-avatar-wrap">
+        <div class="user-avatar">💕</div>
+        <div class="user-name-sidebar" id="user-name-sidebar">Nazlı</div>
+      </div>
       <div class="cycle-mini-badge" id="cycle-mini-badge">
         <span id="mini-badge-text">Yükleniyor...</span>
       </div>
+      <button class="lock-btn" onclick="lockApp()" title="Kilitle">🔒 Kilitle</button>
     </div>
   </nav>
 
@@ -56,6 +90,7 @@
   <div class="mobile-topbar">
     <div class="logo-icon-sm">🌙</div>
     <span class="logo-text-sm">LunaCycle</span>
+    <button class="mobile-lock-btn" onclick="lockApp()" title="Kilitle">🔒</button>
     <button class="mobile-menu-btn" id="mobile-menu-btn">☰</button>
   </div>
 
@@ -64,9 +99,17 @@
 
     <!-- === HOME PAGE === -->
     <section class="page active" id="page-home">
+
+      <!-- MOTIVATION BANNER -->
+      <div class="motivation-banner" id="motivation-banner">
+        <span class="motivation-icon" id="motivation-icon">✨</span>
+        <p class="motivation-text" id="motivation-text">Yükleniyor...</p>
+        <button class="notif-btn" id="notif-btn" onclick="requestNotifications()" title="Bildirim Al">🔔</button>
+      </div>
+
       <div class="page-header">
         <div>
-          <h1 class="page-title">Merhaba 👋</h1>
+          <h1 class="page-title" id="greeting-title">Merhaba Nazlı! 💕</h1>
           <p class="page-subtitle" id="today-date-label">Bugün: —</p>
         </div>
         <button class="btn-primary" id="mark-period-btn" onclick="quickMarkPeriod()">
@@ -147,6 +190,39 @@
         <div class="alert-content">
           <h3 class="alert-title" id="alert-title">Dikkat!</h3>
           <p class="alert-text" id="alert-text"></p>
+        </div>
+      </div>
+
+      <!-- WATER TRACKER -->
+      <div class="water-tracker-card">
+        <div class="water-header">
+          <h2 class="section-title">💧 Günlük Su Takibi</h2>
+          <span class="water-goal-badge" id="water-goal-badge">0 / 8 bardak</span>
+        </div>
+        <div class="water-cups" id="water-cups"></div>
+        <div class="water-bar-wrap">
+          <div class="water-bar-fill" id="water-bar-fill" style="width:0%"></div>
+        </div>
+        <p class="water-tip" id="water-tip">Bugün henüz su içmediniz. İlk bardağı içme zamanı! 💧</p>
+      </div>
+
+      <!-- PHASE TIPS: Nutrition + Exercise -->
+      <div class="phase-tips-grid" id="phase-tips-grid">
+        <div class="tip-card tip-nutrition" id="tip-nutrition">
+          <div class="tip-card-header">
+            <span class="tip-icon">🥗</span>
+            <h3 class="tip-title">Beslenme Önerisi</h3>
+          </div>
+          <p class="tip-text" id="tip-nutrition-text">—</p>
+          <div class="tip-foods" id="tip-foods"></div>
+        </div>
+        <div class="tip-card tip-exercise" id="tip-exercise">
+          <div class="tip-card-header">
+            <span class="tip-icon">🧘</span>
+            <h3 class="tip-title">Egzersiz Önerisi</h3>
+          </div>
+          <p class="tip-text" id="tip-exercise-text">—</p>
+          <div class="tip-activities" id="tip-activities"></div>
         </div>
       </div>
 
@@ -391,6 +467,26 @@
         <div>
           <h1 class="page-title">Ayarlar</h1>
           <p class="page-subtitle">Uygulamayı kişiselleştirin</p>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h2 class="settings-section-title">👤 Kişisel Bilgiler</h2>
+        <div class="settings-card">
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">İsminiz</div>
+              <div class="setting-desc">Karşılamada görünecek</div>
+            </div>
+            <input type="text" class="setting-input" style="width:120px;text-align:left;" id="setting-name" value="Nazlı" onchange="saveSettings()" placeholder="İsminiz" />
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Gizlilik PIN'i</div>
+              <div class="setting-desc">4 haneli (boş = kilitsiz)</div>
+            </div>
+            <input type="password" inputmode="numeric" maxlength="4" class="setting-input" style="width:80px;" id="setting-pin" placeholder="••••" onchange="saveSettings()" />
+          </div>
         </div>
       </div>
 
