@@ -17,7 +17,7 @@ function saveData(key, val) {
   localStorage.setItem(key, JSON.stringify(val));
 }
 
-let settings = loadData(STORAGE_KEYS.SETTINGS, {
+const DEFAULTS = {
   cycleLength:   28,
   periodLength:  5,
   lutealLength:  14,
@@ -26,7 +26,16 @@ let settings = loadData(STORAGE_KEYS.SETTINGS, {
   userName:      'Nazlı',
   userPin:       '',
   waterToday:    { date: '', cups: 0 },
-});
+};
+
+let settings = (function() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEYS.SETTINGS));
+    // Merge: defaults first, then stored values on top — ensures new fields always exist
+    return stored ? Object.assign({}, DEFAULTS, stored) : { ...DEFAULTS };
+  } catch { return { ...DEFAULTS }; }
+})();
+
 let logs    = loadData(STORAGE_KEYS.LOGS, {});     // { 'YYYY-MM-DD': {...} }
 let periods = loadData(STORAGE_KEYS.PERIODS, []);  // [ { start:'YYYY-MM-DD', end:'YYYY-MM-DD' } ]
 
@@ -808,7 +817,9 @@ function loadSettings() {
   document.getElementById('setting-luteal-length').value = settings.lutealLength;
   document.getElementById('setting-goal').value          = settings.goal;
   document.getElementById('setting-name').value          = settings.userName || 'Nazlı';
-  document.getElementById('setting-pin').value           = settings.userPin  || '';
+  // Show PIN as number (masked display)
+  const pinEl = document.getElementById('setting-pin');
+  if (pinEl) pinEl.value = settings.userPin || '';
   if (settings.lastPeriod) {
     document.getElementById('setting-last-period').value = settings.lastPeriod;
   }
@@ -821,13 +832,23 @@ function saveSettings() {
   settings.lastPeriod    = document.getElementById('setting-last-period').value || null;
   settings.goal          = document.getElementById('setting-goal').value;
   settings.userName      = document.getElementById('setting-name').value.trim() || 'Nazlı';
-  settings.userPin       = document.getElementById('setting-pin').value.trim();
+  // PIN: take raw value, keep only digits, max 4
+  const rawPin = String(document.getElementById('setting-pin').value || '').replace(/\D/g,'').slice(0,4);
+  settings.userPin = rawPin;
   saveData(STORAGE_KEYS.SETTINGS, settings);
-  // Update sidebar name
   document.getElementById('user-name-sidebar').textContent = settings.userName;
-  showToast('✅ Ayarlar kaydedildi!');
+  showToast(rawPin.length === 4
+    ? `✅ Ayarlar kaydedildi! PIN: ${rawPin} aktif.`
+    : '✅ Ayarlar kaydedildi!');
   renderHome();
   renderCalendar();
+}
+
+function clearPin() {
+  document.getElementById('setting-pin').value = '';
+  settings.userPin = '';
+  saveData(STORAGE_KEYS.SETTINGS, settings);
+  showToast('🔓 PIN kaldırıldı, uygulama kilitsiz.');
 }
 
 // ─── DATA EXPORT / DELETE ────────────────────────────────────
