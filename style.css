@@ -694,3 +694,132 @@ input[type="number"] { color-scheme: dark; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.3); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(168,85,247,0.5); }
+
+/* ---- PIN Lock Screen ---- */
+.pin-overlay {
+  position: fixed; inset: 0; z-index: 99999;
+  background: linear-gradient(135deg, #0f0518 0%, #1a0530 50%, #0d0420 100%);
+  display: flex; align-items: center; justify-content: center;
+  animation: fadeInUp 0.4s ease;
+}
+.pin-overlay.hidden { display: none; }
+.pin-card { text-align: center; width: 320px; }
+.pin-moon { font-size: 3rem; margin-bottom: 0.5rem; filter: drop-shadow(0 0 16px #a855f7); animation: pulse 2s ease-in-out infinite; }
+.pin-title { font-size: 1.8rem; font-weight: 800; background: linear-gradient(135deg, #f9a8d4, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.3rem; }
+.pin-subtitle { color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 1.5rem; min-height: 1.2em; }
+.pin-dots { display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem; }
+.pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(236,72,153,0.4); background: transparent; transition: all 0.2s; }
+.pin-dot.filled { background: var(--pink-500); border-color: var(--pink-500); box-shadow: 0 0 8px var(--pink-500); transform: scale(1.1); }
+.pin-dot.error { background: #ef4444; border-color: #ef4444; animation: shake 0.4s ease; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+.pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+.pin-key {
+  aspect-ratio: 1; border-radius: 50%;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: var(--text-primary); font-family: 'Outfit', sans-serif;
+  font-size: 1.3rem; font-weight: 600; cursor: pointer;
+  transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.pin-key:hover { background: rgba(236,72,153,0.2); border-color: rgba(236,72,153,0.4); transform: scale(1.05); }
+.pin-key:active { transform: scale(0.95); background: rgba(236,72,153,0.3); }
+.pin-key-skip { font-size: 0.85rem; color: var(--text-muted); }
+.pin-key-del { font-size: 1.1rem; }
+
+/* ---- Motivation Banner ---- */
+.motivation-banner {
+  background: linear-gradient(135deg, rgba(168,85,247,0.12), rgba(236,72,153,0.12));
+  border: 1px solid rgba(168,85,247,0.25);
+  border-radius: var(--radius);
+  padding: 0.9rem 1.25rem;
+  display: flex; align-items: center; gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  position: relative; overflow: hidden;
+}
+.motivation-banner::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--purple-500), var(--pink-500), var(--purple-500));
+  background-size: 200% 100%;
+  animation: shimmer 3s linear infinite;
+}
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+.motivation-icon { font-size: 1.3rem; flex-shrink: 0; }
+.motivation-text { flex: 1; font-size: 0.88rem; color: var(--text-secondary); font-style: italic; line-height: 1.4; }
+.notif-btn {
+  background: rgba(255,255,255,0.08); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text-secondary); font-size: 1rem;
+  padding: 0.35rem 0.55rem; cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+}
+.notif-btn:hover { background: rgba(255,255,255,0.15); color: var(--text-primary); }
+.notif-btn.active { color: #fcd34d; background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.4); }
+
+/* ---- User Avatar & Lock in Sidebar ---- */
+.user-avatar-wrap { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.75rem; padding: 0.5rem; }
+.user-avatar { font-size: 1.5rem; background: linear-gradient(135deg, rgba(236,72,153,0.2), rgba(168,85,247,0.2)); border: 1px solid rgba(236,72,153,0.3); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
+.user-name-sidebar { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); }
+.lock-btn {
+  width: 100%; margin-top: 0.5rem; padding: 0.5rem;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text-muted);
+  font-family: 'Outfit', sans-serif; font-size: 0.8rem;
+  cursor: pointer; transition: all 0.2s;
+}
+.lock-btn:hover { background: rgba(239,68,68,0.1); color: #fca5a5; border-color: rgba(239,68,68,0.3); }
+.mobile-lock-btn {
+  background: none; border: none; color: var(--text-secondary);
+  font-size: 1.1rem; cursor: pointer; padding: 0.25rem; margin-right: 0.25rem;
+}
+
+/* ---- Water Tracker ---- */
+.water-tracker-card {
+  background: linear-gradient(135deg, rgba(56,189,248,0.08), rgba(14,165,233,0.05));
+  border: 1px solid rgba(56,189,248,0.2);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+.water-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.water-goal-badge { font-size: 0.8rem; padding: 0.25rem 0.75rem; border-radius: 100px; background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.3); color: #7dd3fc; font-weight: 600; }
+.water-cups { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+.water-cup {
+  font-size: 1.5rem; cursor: pointer; transition: all 0.2s;
+  filter: grayscale(1) opacity(0.3);
+  user-select: none;
+}
+.water-cup.filled { filter: none; transform: scale(1.1); animation: dropIn 0.3s ease; }
+@keyframes dropIn { 0%{transform:scale(0.7) translateY(-5px)} 60%{transform:scale(1.2)} 100%{transform:scale(1.1)} }
+.water-cup:hover { filter: none; opacity: 0.7; }
+.water-bar-wrap { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; margin-bottom: 0.5rem; }
+.water-bar-fill { height: 100%; background: linear-gradient(90deg, #38bdf8, #0ea5e9); border-radius: 3px; transition: width 0.4s ease; }
+.water-tip { font-size: 0.8rem; color: #7dd3fc; opacity: 0.8; }
+
+/* ---- Phase Tips Cards ---- */
+.phase-tips-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1rem; margin-bottom: 1.5rem;
+}
+.tip-card {
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+}
+.tip-nutrition { background: linear-gradient(135deg, rgba(34,197,94,0.08), rgba(16,185,129,0.05)); border-color: rgba(34,197,94,0.2); }
+.tip-exercise  { background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(251,146,60,0.05)); border-color: rgba(245,158,11,0.2); }
+.tip-card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; }
+.tip-icon { font-size: 1.3rem; }
+.tip-title { font-size: 0.85rem; font-weight: 700; color: var(--text-primary); }
+.tip-text { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.6rem; }
+.tip-foods, .tip-activities { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.tip-tag {
+  font-size: 0.72rem; padding: 0.2rem 0.5rem;
+  border-radius: 100px; font-weight: 500;
+}
+.food-tag { background: rgba(34,197,94,0.15); color: #86efac; border: 1px solid rgba(34,197,94,0.3); }
+.activity-tag { background: rgba(245,158,11,0.15); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
+
+@media (max-width: 600px) {
+  .phase-tips-grid { grid-template-columns: 1fr; }
+  .pin-card { width: 280px; }
+  .pin-key { font-size: 1.1rem; }
+}
