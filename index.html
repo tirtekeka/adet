@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LunaCycle – Regl & Döngü Takip</title>
+  <meta name="description" content="LunaCycle ile regl döngünüzü, yumurtlama döneminizi ve hamilelik olasılığınızı kolayca takip edin." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- Animated background blobs -->
+<div class="bg-blobs">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+</div>
+
+<!-- App Shell -->
+<div class="app-shell">
+
+  <!-- Sidebar Nav -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🌙</div>
+      <span class="logo-text">LunaCycle</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#" class="nav-item active" data-page="home" id="nav-home">
+        <span class="nav-icon">🏠</span><span class="nav-label">Ana Sayfa</span>
+      </a></li>
+      <li><a href="#" class="nav-item" data-page="calendar" id="nav-calendar">
+        <span class="nav-icon">📅</span><span class="nav-label">Takvim</span>
+      </a></li>
+      <li><a href="#" class="nav-item" data-page="log" id="nav-log">
+        <span class="nav-icon">✏️</span><span class="nav-label">Günlük Kayıt</span>
+      </a></li>
+      <li><a href="#" class="nav-item" data-page="insights" id="nav-insights">
+        <span class="nav-icon">📊</span><span class="nav-label">İstatistikler</span>
+      </a></li>
+      <li><a href="#" class="nav-item" data-page="settings" id="nav-settings">
+        <span class="nav-icon">⚙️</span><span class="nav-label">Ayarlar</span>
+      </a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <div class="cycle-mini-badge" id="cycle-mini-badge">
+        <span id="mini-badge-text">Yükleniyor...</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Top Bar -->
+  <div class="mobile-topbar">
+    <div class="logo-icon-sm">🌙</div>
+    <span class="logo-text-sm">LunaCycle</span>
+    <button class="mobile-menu-btn" id="mobile-menu-btn">☰</button>
+  </div>
+
+  <!-- Main Content -->
+  <main class="main-content" id="main-content">
+
+    <!-- === HOME PAGE === -->
+    <section class="page active" id="page-home">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Merhaba 👋</h1>
+          <p class="page-subtitle" id="today-date-label">Bugün: —</p>
+        </div>
+        <button class="btn-primary" id="mark-period-btn" onclick="quickMarkPeriod()">
+          + Regl Başladı
+        </button>
+      </div>
+
+      <!-- TODAY STATUS CARD -->
+      <div class="status-card" id="status-card">
+        <div class="status-icon" id="status-icon">🔄</div>
+        <div class="status-info">
+          <h2 class="status-title" id="status-title">Hesaplanıyor...</h2>
+          <p class="status-desc" id="status-desc">Lütfen bekleyin</p>
+        </div>
+        <div class="pregnancy-risk-badge" id="pregnancy-risk-badge">
+          <span id="risk-label">—</span>
+        </div>
+      </div>
+
+      <!-- PHASE STRIP -->
+      <div class="phase-strip" id="phase-strip">
+        <div class="phase-item" id="ph-menstrual">
+          <div class="phase-dot"></div>
+          <div class="phase-name">Regl</div>
+          <div class="phase-days" id="ph-menstrual-days">—</div>
+        </div>
+        <div class="phase-divider"></div>
+        <div class="phase-item" id="ph-follicular">
+          <div class="phase-dot"></div>
+          <div class="phase-name">Foliküler</div>
+          <div class="phase-days" id="ph-follicular-days">—</div>
+        </div>
+        <div class="phase-divider"></div>
+        <div class="phase-item" id="ph-ovulation">
+          <div class="phase-dot"></div>
+          <div class="phase-name">Yumurtlama</div>
+          <div class="phase-days" id="ph-ovulation-days">—</div>
+        </div>
+        <div class="phase-divider"></div>
+        <div class="phase-item" id="ph-luteal">
+          <div class="phase-dot"></div>
+          <div class="phase-name">Lüteal</div>
+          <div class="phase-days" id="ph-luteal-days">—</div>
+        </div>
+      </div>
+
+      <!-- INFO CARDS GRID -->
+      <div class="cards-grid">
+        <div class="info-card card-pink">
+          <div class="card-icon">🩸</div>
+          <div class="card-label">Sonraki Regl</div>
+          <div class="card-value" id="next-period-val">—</div>
+          <div class="card-sub" id="next-period-sub">gün kaldı</div>
+        </div>
+        <div class="info-card card-purple">
+          <div class="card-icon">🥚</div>
+          <div class="card-label">Yumurtlama</div>
+          <div class="card-value" id="ovulation-val">—</div>
+          <div class="card-sub" id="ovulation-sub">tahmini tarih</div>
+        </div>
+        <div class="info-card card-rose">
+          <div class="card-icon">🔥</div>
+          <div class="card-label">Fertil Pencere</div>
+          <div class="card-value" id="fertile-val">—</div>
+          <div class="card-sub" id="fertile-sub">başlangıç – bitiş</div>
+        </div>
+        <div class="info-card card-lavender">
+          <div class="card-icon">📏</div>
+          <div class="card-label">Döngü Uzunluğu</div>
+          <div class="card-value" id="cycle-length-val">—</div>
+          <div class="card-sub">gün ortalama</div>
+        </div>
+      </div>
+
+      <!-- PREGNANCY ALERT BOX -->
+      <div class="alert-box" id="pregnancy-alert" style="display:none;">
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-content">
+          <h3 class="alert-title" id="alert-title">Dikkat!</h3>
+          <p class="alert-text" id="alert-text"></p>
+        </div>
+      </div>
+
+      <!-- CYCLE PROGRESS BAR -->
+      <div class="cycle-progress-section">
+        <div class="section-header">
+          <h2 class="section-title">Döngü Durumu</h2>
+          <span class="section-badge" id="cycle-day-badge">Gün —</span>
+        </div>
+        <div class="cycle-progress-bar-wrap">
+          <div class="cycle-progress-bar" id="cycle-progress-bar">
+            <div class="cycle-progress-fill" id="cycle-progress-fill" style="width:0%"></div>
+            <div class="cycle-progress-thumb" id="cycle-progress-thumb" style="left:0%"></div>
+          </div>
+          <div class="cycle-progress-labels">
+            <span>Regl</span>
+            <span>Foliküler</span>
+            <span>Yumurtlama</span>
+            <span>Lüteal</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- RECENT LOGS -->
+      <div class="section-header" style="margin-top:2rem">
+        <h2 class="section-title">Son Kayıtlar</h2>
+        <a href="#" class="section-link" onclick="showPage('log')">Tümünü Gör</a>
+      </div>
+      <div class="recent-logs" id="recent-logs-home">
+        <div class="empty-state">Henüz kayıt yok. Günlük kayıt ekleyin!</div>
+      </div>
+    </section>
+
+    <!-- === CALENDAR PAGE === -->
+    <section class="page" id="page-calendar">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Takvim</h1>
+          <p class="page-subtitle">Döngünüzü görsel olarak takip edin</p>
+        </div>
+      </div>
+      <div class="calendar-nav">
+        <button class="cal-nav-btn" id="cal-prev" onclick="calendarPrev()">‹</button>
+        <h2 class="cal-month-title" id="cal-month-title">—</h2>
+        <button class="cal-nav-btn" id="cal-next" onclick="calendarNext()">›</button>
+      </div>
+      <div class="calendar-legend">
+        <div class="legend-item"><div class="legend-dot legend-period"></div><span>Regl</span></div>
+        <div class="legend-item"><div class="legend-dot legend-fertile"></div><span>Fertil</span></div>
+        <div class="legend-item"><div class="legend-dot legend-ovulation"></div><span>Yumurtlama</span></div>
+        <div class="legend-item"><div class="legend-dot legend-predicted"></div><span>Tahmin</span></div>
+        <div class="legend-item"><div class="legend-dot legend-logged"></div><span>Kayıt Var</span></div>
+      </div>
+      <div class="calendar-grid-wrap">
+        <div class="calendar-weekdays">
+          <span>Pzt</span><span>Sal</span><span>Çar</span><span>Per</span><span>Cum</span><span>Cmt</span><span>Paz</span>
+        </div>
+        <div class="calendar-days" id="calendar-days"></div>
+      </div>
+
+      <!-- Calendar day detail -->
+      <div class="day-detail-panel" id="day-detail-panel" style="display:none;">
+        <div class="day-detail-header">
+          <h3 id="day-detail-title">—</h3>
+          <button class="close-btn" onclick="closeDayDetail()">✕</button>
+        </div>
+        <div class="day-detail-body" id="day-detail-body"></div>
+      </div>
+    </section>
+
+    <!-- === LOG PAGE === -->
+    <section class="page" id="page-log">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Günlük Kayıt</h1>
+          <p class="page-subtitle">Bugünkü durumunuzu kaydedin</p>
+        </div>
+      </div>
+
+      <div class="log-form-card">
+        <div class="form-group">
+          <label class="form-label">📅 Tarih</label>
+          <input type="date" class="form-input" id="log-date" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">🩸 Regl Durumu</label>
+          <div class="toggle-group" id="period-toggle">
+            <button class="toggle-btn active" data-val="none" onclick="setToggle('period-toggle', this)">Yok</button>
+            <button class="toggle-btn" data-val="spotting" onclick="setToggle('period-toggle', this)">Lekelenme</button>
+            <button class="toggle-btn" data-val="light" onclick="setToggle('period-toggle', this)">Hafif</button>
+            <button class="toggle-btn" data-val="medium" onclick="setToggle('period-toggle', this)">Orta</button>
+            <button class="toggle-btn" data-val="heavy" onclick="setToggle('period-toggle', this)">Yoğun</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">😣 Ağrı Şiddeti</label>
+          <div class="slider-wrap">
+            <input type="range" min="0" max="10" value="0" class="form-slider" id="pain-slider" oninput="updateSliderLabel('pain-slider','pain-label')" />
+            <span class="slider-label" id="pain-label">0 – Ağrı Yok</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">😊 Ruh Hali</label>
+          <div class="mood-grid" id="mood-grid">
+            <button class="mood-btn" data-val="happy" onclick="selectMood(this)">😊<span>Mutlu</span></button>
+            <button class="mood-btn" data-val="sad" onclick="selectMood(this)">😢<span>Üzgün</span></button>
+            <button class="mood-btn" data-val="anxious" onclick="selectMood(this)">😰<span>Endişeli</span></button>
+            <button class="mood-btn" data-val="irritable" onclick="selectMood(this)">😤<span>Sinirli</span></button>
+            <button class="mood-btn" data-val="energetic" onclick="selectMood(this)">⚡<span>Enerjik</span></button>
+            <button class="mood-btn" data-val="tired" onclick="selectMood(this)">😴<span>Yorgun</span></button>
+            <button class="mood-btn" data-val="romantic" onclick="selectMood(this)">💕<span>Romantik</span></button>
+            <button class="mood-btn" data-val="calm" onclick="selectMood(this)">😌<span>Sakin</span></button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">🌡️ Semptomlar</label>
+          <div class="symptom-grid" id="symptom-grid">
+            <button class="symptom-btn" data-val="cramps" onclick="toggleSymptom(this)">Kramp</button>
+            <button class="symptom-btn" data-val="headache" onclick="toggleSymptom(this)">Baş Ağrısı</button>
+            <button class="symptom-btn" data-val="bloating" onclick="toggleSymptom(this)">Şişkinlik</button>
+            <button class="symptom-btn" data-val="backpain" onclick="toggleSymptom(this)">Sırt Ağrısı</button>
+            <button class="symptom-btn" data-val="nausea" onclick="toggleSymptom(this)">Bulantı</button>
+            <button class="symptom-btn" data-val="breast" onclick="toggleSymptom(this)">Göğüs Hassasiyeti</button>
+            <button class="symptom-btn" data-val="acne" onclick="toggleSymptom(this)">Akne</button>
+            <button class="symptom-btn" data-val="discharge" onclick="toggleSymptom(this)">Akıntı</button>
+            <button class="symptom-btn" data-val="fatigue" onclick="toggleSymptom(this)">Yorgunluk</button>
+            <button class="symptom-btn" data-val="insomnia" onclick="toggleSymptom(this)">Uyku Sorunu</button>
+            <button class="symptom-btn" data-val="appetite" onclick="toggleSymptom(this)">İştah Değişimi</button>
+            <button class="symptom-btn" data-val="ovulation-pain" onclick="toggleSymptom(this)">Mittelschmerz</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">💧 Akıntı Tipi</label>
+          <div class="toggle-group" id="discharge-toggle">
+            <button class="toggle-btn active" data-val="none" onclick="setToggle('discharge-toggle', this)">Yok</button>
+            <button class="toggle-btn" data-val="dry" onclick="setToggle('discharge-toggle', this)">Kuru</button>
+            <button class="toggle-btn" data-val="sticky" onclick="setToggle('discharge-toggle', this)">Yapışkan</button>
+            <button class="toggle-btn" data-val="creamy" onclick="setToggle('discharge-toggle', this)">Kremsi</button>
+            <button class="toggle-btn" data-val="watery" onclick="setToggle('discharge-toggle', this)">Sulu</button>
+            <button class="toggle-btn" data-val="eggwhite" onclick="setToggle('discharge-toggle', this)">Yumurta Akı</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">🌡️ Bazal Vücut Sıcaklığı (°C)</label>
+          <input type="number" step="0.01" min="35" max="40" placeholder="örn: 36.5" class="form-input" id="bbt-input" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">💑 Cinsel İlişki</label>
+          <div class="toggle-group" id="sex-toggle">
+            <button class="toggle-btn active" data-val="none" onclick="setToggle('sex-toggle', this)">Hayır</button>
+            <button class="toggle-btn" data-val="protected" onclick="setToggle('sex-toggle', this)">Korunarak</button>
+            <button class="toggle-btn" data-val="unprotected" onclick="setToggle('sex-toggle', this)">Korunmadan</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">📝 Notlar</label>
+          <textarea class="form-textarea" id="log-notes" placeholder="Bugün nasıl hissettiniz? Not ekleyin..."></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-secondary" onclick="clearLogForm()">Temizle</button>
+          <button class="btn-primary" onclick="saveLog()">Kaydet 💾</button>
+        </div>
+      </div>
+
+      <!-- Log History -->
+      <div class="section-header" style="margin-top:2rem">
+        <h2 class="section-title">Geçmiş Kayıtlar</h2>
+      </div>
+      <div id="log-history-list"></div>
+    </section>
+
+    <!-- === INSIGHTS PAGE === -->
+    <section class="page" id="page-insights">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">İstatistikler</h1>
+          <p class="page-subtitle">Döngünüzü analiz edin</p>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📏</div>
+          <div class="stat-label">Ort. Döngü Uzunluğu</div>
+          <div class="stat-value" id="stat-avg-cycle">—</div>
+          <div class="stat-unit">gün</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🩸</div>
+          <div class="stat-label">Ort. Regl Süresi</div>
+          <div class="stat-value" id="stat-avg-period">—</div>
+          <div class="stat-unit">gün</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📈</div>
+          <div class="stat-label">Toplam Kayıt</div>
+          <div class="stat-value" id="stat-total-logs">—</div>
+          <div class="stat-unit">gün</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🔄</div>
+          <div class="stat-label">Takip Edilen Döngü</div>
+          <div class="stat-value" id="stat-cycles-tracked">—</div>
+          <div class="stat-unit">döngü</div>
+        </div>
+      </div>
+
+      <div class="insight-section">
+        <h2 class="section-title">Döngü Geçmişi</h2>
+        <div class="cycle-history-list" id="cycle-history-list">
+          <div class="empty-state">Henüz yeterli döngü verisi yok.</div>
+        </div>
+      </div>
+
+      <div class="insight-section">
+        <h2 class="section-title">Semptom Analizi</h2>
+        <div class="symptom-chart" id="symptom-chart">
+          <div class="empty-state">Kayıt eklendikçe semptom analizi görünecek.</div>
+        </div>
+      </div>
+
+      <div class="insight-section">
+        <h2 class="section-title">Ruh Hali Dağılımı</h2>
+        <div class="mood-chart" id="mood-chart">
+          <div class="empty-state">Ruh hali kayıtlarınız burada görünecek.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- === SETTINGS PAGE === -->
+    <section class="page" id="page-settings">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Ayarlar</h1>
+          <p class="page-subtitle">Uygulamayı kişiselleştirin</p>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h2 class="settings-section-title">⚙️ Döngü Ayarları</h2>
+        <div class="settings-card">
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Ortalama Döngü Uzunluğu</div>
+              <div class="setting-desc">Genellikle 21-35 gün arasıdır</div>
+            </div>
+            <input type="number" min="21" max="45" class="setting-input" id="setting-cycle-length" value="28" onchange="saveSettings()" />
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Ortalama Regl Süresi</div>
+              <div class="setting-desc">Genellikle 3-7 gün arasıdır</div>
+            </div>
+            <input type="number" min="1" max="10" class="setting-input" id="setting-period-length" value="5" onchange="saveSettings()" />
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Son Regl Başlangıç Tarihi</div>
+              <div class="setting-desc">İlk döngüyü hesaplamak için</div>
+            </div>
+            <input type="date" class="setting-input-date" id="setting-last-period" onchange="saveSettings()" />
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Lüteal Faz Uzunluğu</div>
+              <div class="setting-desc">Genellikle 12-16 gün (varsayılan: 14)</div>
+            </div>
+            <input type="number" min="10" max="18" class="setting-input" id="setting-luteal-length" value="14" onchange="saveSettings()" />
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h2 class="settings-section-title">🎯 Hedef</h2>
+        <div class="settings-card">
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Amaç</div>
+              <div class="setting-desc">Uygulamanızın amacını seçin</div>
+            </div>
+            <select class="setting-select" id="setting-goal" onchange="saveSettings()">
+              <option value="track">Sadece Takip</option>
+              <option value="avoid">Hamilelikten Kaçınma</option>
+              <option value="conceive">Hamile Kalmak İstiyorum</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h2 class="settings-section-title">📊 Veri Yönetimi</h2>
+        <div class="settings-card">
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Verileri Dışa Aktar</div>
+              <div class="setting-desc">JSON formatında indirin</div>
+            </div>
+            <button class="btn-secondary sm" onclick="exportData()">Dışa Aktar</button>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Tüm Verileri Sil</div>
+              <div class="setting-desc" style="color:#f87171">Bu işlem geri alınamaz!</div>
+            </div>
+            <button class="btn-danger sm" onclick="confirmDeleteAll()">Sil</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- TOAST Notification -->
+<div class="toast" id="toast"></div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="modal-overlay" style="display:none;">
+  <div class="modal-card">
+    <h3 id="modal-title">Emin misiniz?</h3>
+    <p id="modal-body">Bu işlemi yapmak istediğinizden emin misiniz?</p>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">İptal</button>
+      <button class="btn-danger" id="modal-confirm-btn">Evet, Sil</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
