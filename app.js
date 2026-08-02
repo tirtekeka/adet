@@ -21,8 +21,11 @@ let settings = loadData(STORAGE_KEYS.SETTINGS, {
   cycleLength:   28,
   periodLength:  5,
   lutealLength:  14,
-  lastPeriod:    null,   // ISO date string
+  lastPeriod:    null,
   goal:          'track',
+  userName:      'Nazlı',
+  userPin:       '',
+  waterToday:    { date: '', cups: 0 },
 });
 let logs    = loadData(STORAGE_KEYS.LOGS, {});     // { 'YYYY-MM-DD': {...} }
 let periods = loadData(STORAGE_KEYS.PERIODS, []);  // [ { start:'YYYY-MM-DD', end:'YYYY-MM-DD' } ]
@@ -787,6 +790,8 @@ function loadSettings() {
   document.getElementById('setting-period-length').value = settings.periodLength;
   document.getElementById('setting-luteal-length').value = settings.lutealLength;
   document.getElementById('setting-goal').value          = settings.goal;
+  document.getElementById('setting-name').value          = settings.userName || 'Nazlı';
+  document.getElementById('setting-pin').value           = settings.userPin  || '';
   if (settings.lastPeriod) {
     document.getElementById('setting-last-period').value = settings.lastPeriod;
   }
@@ -798,7 +803,11 @@ function saveSettings() {
   settings.lutealLength  = parseInt(document.getElementById('setting-luteal-length').value) || 14;
   settings.lastPeriod    = document.getElementById('setting-last-period').value || null;
   settings.goal          = document.getElementById('setting-goal').value;
+  settings.userName      = document.getElementById('setting-name').value.trim() || 'Nazlı';
+  settings.userPin       = document.getElementById('setting-pin').value.trim();
   saveData(STORAGE_KEYS.SETTINGS, settings);
+  // Update sidebar name
+  document.getElementById('user-name-sidebar').textContent = settings.userName;
   showToast('✅ Ayarlar kaydedildi!');
   renderHome();
   renderCalendar();
@@ -895,15 +904,313 @@ document.addEventListener('click', (e) => {
 
 // ─── INIT ───────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  initPin();
   loadSettings();
   initLogForm();
-  renderHome();
-  renderCalendar();
+  initWaterTracker();
 
-  // If no last period set, show settings first
   if (!settings.lastPeriod) {
     setTimeout(() => {
       showToast('👋 Başlamak için son regl tarihinizi Ayarlar\'a girin!');
     }, 800);
   }
 });
+
+
+/* ============================================================
+   YENİ ÖZELLİKLER – PIN, Su Tak., Motivasyon, İpuçları
+   ============================================================ */
+
+// ─── PIN LOCK ───────────────────────────────────────────────
+let pinBuffer = '';
+
+function initPin() {
+  const pin = settings.userPin;
+  const overlay = document.getElementById('pin-overlay');
+  if (!pin || pin.length < 4) {
+    // No PIN set – hide overlay immediately
+    overlay.classList.add('hidden');
+    renderHome();
+    renderCalendar();
+    return;
+  }
+  // Show the lock screen
+  overlay.classList.remove('hidden');
+  document.getElementById('pin-subtitle').textContent = `Merhaba ${settings.userName || 'Nazlı'}! PIN'inizi girin 💕`;
+  pinBuffer = '';
+  updatePinDots();
+}
+
+function pinInput(digit) {
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += digit;
+  updatePinDots();
+  if (pinBuffer.length === 4) {
+    setTimeout(() => checkPin(), 150);
+  }
+}
+
+function pinDelete() {
+  pinBuffer = pinBuffer.slice(0, -1);
+  updatePinDots();
+}
+
+function skipPin() {
+  document.getElementById('pin-overlay').classList.add('hidden');
+  renderHome();
+  renderCalendar();
+}
+
+function updatePinDots() {
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById('dot-' + i);
+    dot.classList.remove('filled', 'error');
+    if (i < pinBuffer.length) dot.classList.add('filled');
+  }
+}
+
+function checkPin() {
+  if (pinBuffer === settings.userPin) {
+    document.getElementById('pin-overlay').classList.add('hidden');
+    renderHome();
+    renderCalendar();
+    showToast(`💕 Hoş geldin, ${settings.userName || 'Nazlı'}!`);
+  } else {
+    // Wrong PIN
+    for (let i = 0; i < 4; i++) {
+      document.getElementById('dot-' + i).classList.add('error');
+    }
+    document.getElementById('pin-subtitle').textContent = '❌ Yanlış PIN! Tekrar deneyin.';
+    setTimeout(() => {
+      pinBuffer = '';
+      updatePinDots();
+      document.getElementById('pin-subtitle').textContent = 'PIN\'inizi girin 💕';
+    }, 900);
+  }
+}
+
+function lockApp() {
+  if (!settings.userPin || settings.userPin.length < 4) {
+    showToast('⚠️ Ayarlar\'dan önce PIN oluşturun!');
+    showPage('settings');
+    return;
+  }
+  pinBuffer = '';
+  updatePinDots();
+  document.getElementById('pin-subtitle').textContent = `Hoş geldin, ${settings.userName || 'Nazlı'}! PIN'inizi girin 💕`;
+  document.getElementById('pin-overlay').classList.remove('hidden');
+}
+
+// ─── WATER TRACKER ──────────────────────────────────────────
+const WATER_TIPS = [
+  'Harika! 8 bardağın tamamını içtin! 🌟',
+  '6-7 bardak çok iyi gidiyorsun! 💧',
+  'Yarı yoldayız, devam et! 💧',
+  'Henüz az, su içmeyi unutma! 💧',
+  'Bugün henüz su içmediniz. İlk bardağı içme zamanı! 💧',
+];
+
+function initWaterTracker() {
+  // Reset if new day
+  const today = todayStr();
+  if (!settings.waterToday || settings.waterToday.date !== today) {
+    settings.waterToday = { date: today, cups: 0 };
+    saveData(STORAGE_KEYS.SETTINGS, settings);
+  }
+  renderWaterTracker();
+}
+
+function renderWaterTracker() {
+  const cups = settings.waterToday?.cups || 0;
+  const container = document.getElementById('water-cups');
+  if (!container) return;
+
+  container.innerHTML = '';
+  for (let i = 0; i < 8; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'water-cup' + (i < cups ? ' filled' : '');
+    btn.textContent = i < cups ? '💧' : '🫙';
+    btn.title = i < cups ? `Bardak ${i+1} - İçildi` : `Bardak ${i+1} - Tıkla`;
+    btn.onclick = () => toggleWaterCup(i);
+    container.appendChild(btn);
+  }
+
+  const pct = (cups / 8) * 100;
+  document.getElementById('water-bar-fill').style.width = pct + '%';
+  document.getElementById('water-goal-badge').textContent = `${cups} / 8 bardak`;
+
+  let tipIdx = cups === 8 ? 0 : cups >= 6 ? 1 : cups >= 4 ? 2 : cups >= 1 ? 3 : 4;
+  document.getElementById('water-tip').textContent = WATER_TIPS[tipIdx];
+}
+
+function toggleWaterCup(idx) {
+  const cups = settings.waterToday?.cups || 0;
+  // If clicking filled cup → reset to that cup-1; if empty → fill up to that cup+1
+  const newCups = idx < cups ? idx : idx + 1;
+  settings.waterToday = { date: todayStr(), cups: newCups };
+  saveData(STORAGE_KEYS.SETTINGS, settings);
+  renderWaterTracker();
+  if (newCups === 8) showToast('🎉 Günlük su hedefinizi tamamladınız!');
+}
+
+// ─── MOTIVATION QUOTES ──────────────────────────────────────
+const MOTIVATIONS = {
+  menstrual: [
+    { icon: '🌸', text: 'Kendinize şefkatle yaklaşın. Vücudunuz muúze bir iş çıkarıyor.' },
+    { icon: '🌙', text: 'Bu dönem geliyor ve geliyor. Siz buçok güçlüsünüz.' },
+    { icon: '🤍', text: 'Isı uygulayın, bir fincan bitki çayı yapın ve kendinizi şarlındırın.' },
+    { icon: '💧', text: 'Bol su içmeyi unutmayın. Vücudunuz şimdi daha fazlasına ihtiyaç duyuyor.' },
+  ],
+  follicular: [
+    { icon: '✨', text: 'Enerjiniz yükseliyor! Bu dönem yeni şeylere başlamak için muhteşem.' },
+    { icon: '🌸', text: 'Foliküler faz sizinle — yaratıcılığ ve enerji zirvede!' },
+    { icon: '💪', text: 'Bugün kendinizi çok güçlü hissedeceksiniz. İyi ki varsınız!' },
+  ],
+  'fertile-pre': [
+    { icon: '🔥', text: 'Fertil dönemdesiniz! Vücudunuz mucizevi bir yolculukta.' },
+    { icon: '🦋', text: 'Bu günlerde özellikle kendinize dikkat edin — hormonal dengeniz değişiyor.' },
+    { icon: '🌟', text: 'Kendinize özel zaman ayırın. Siz bunu hak ediyorsunuz!' },
+  ],
+  ovulation: [
+    { icon: '🥊', text: 'Bugün yumurtlama gününüz! Vücudunuz olağanüstü bir performans gösteriyor.' },
+    { icon: '⚡', text: 'Enerji ve karizma zirvede! Bugün her şeyi başarabilirsiniz.' },
+    { icon: '🌸', text: 'Vücudunuzun ritmine güvenin. Her şey mükemmel zamanlamayla oluyor.' },
+  ],
+  'fertile-post': [
+    { icon: '🌙', text: 'Yumurtlama bitti — şimdi biraz dinlenme zamanı.' },
+    { icon: '🧘', text: 'Nefes eg zersizleri ve meditasyon bu dönemde harika hissettiriyor.' },
+    { icon: '💕', text: 'Kendinize iyi bakın. Her gün yeni bir başlangıçtır.' },
+  ],
+  luteal: [
+    { icon: '🌙', text: 'Lüteal faz hassaslık getirebilir. Duygularınız geçerli ve değerli.' },
+    { icon: '🧠', text: 'PMS belirtileri yaşıyorsanız bu normal. Kendinize karşı nazik olun.' },
+    { icon: '🟣', text: 'Şekerleme isteği normal — biraz bitter çikolata zararı yok 😊' },
+    { icon: '✨', text: 'Az sonra yeni bir döngü başlıyor. Her şey geçici.' },
+  ],
+};
+
+function renderMotivation(phase) {
+  const list = MOTIVATIONS[phase] || MOTIVATIONS.follicular;
+  const item = list[Math.floor(Math.random() * list.length)];
+  document.getElementById('motivation-icon').textContent = item.icon;
+  document.getElementById('motivation-text').textContent = item.text;
+}
+
+// ─── PHASE TIPS ──────────────────────────────────────────────
+const PHASE_TIPS = {
+  menstrual: {
+    nutrition: 'Kaybedilen demiri yerine koymak için demir açısından zengin gıdalar tercih edin. Kramp için magnezyum çok iyi gelir.',
+    foods: ['🥩 Kırmızı Et', '🥦 Ispanak', '🌿 Mercimek', '🥫 Muz', '🌶️ Zencefil Çayı', '🥜 Fındık'],
+    exercise: 'Yoğun egzersizden kaçının. Hafif hareketler, yürüyüş ve yoga krampı azaltmaya yardımcı olur.',
+    activities: ['🧘 Restoratif Yoga', '🚶‍♀️ Hafif Yürüyüş', '🏥 Ger me', '💤 Dinlenme'],
+  },
+  follicular: {
+    nutrition: 'Vücudunuz folikül gelişimi için besin istiyor. Omega-3 ve antioksidan z engin gıdalar harika seçim.',
+    foods: ['🥑 Avokado', '🐟 Somon', '🥦 Brokoli', '🍳 Yumurta', '🫐 Yaban Mersini', '🌰 Ceviz'],
+    exercise: 'Enerji yüksek! Kardiyo ve güç antrenmanı için en iyi dönem. Yeni bir sporla deneyin.',
+    activities: ['🏋️ Güç Antrenam an', '🏃 Kardiyo', '🚴 Bisiklet', '💃 Dans'],
+  },
+  'fertile-pre': {
+    nutrition: 'Enerji ve libido desteklemek için çinko, E vitamini ve sağlıklı yağlara odaklanın.',
+    foods: ['🤞‍♂️ Balkabak Çekirdeği', '🥜 Badem', '🌍 Zeytin Yağı', '🥭 Ahududu', '👌 Kabak'],
+    exercise: 'Yoğunluğu artırabilirsiniz. Hı zlı yürüyüş, yoga ve dans enerjinizi çıkaracak.',
+    activities: ['🧘 Güç Yogası', '🏃 Koşu', '💃 Zumba', '🏘️ Pilates'],
+  },
+  ovulation: {
+    nutrition: 'En verimli gününüz! Hafif ve enerji veren gıdalar tercih edin. Antiinflamatuar besinler harika.',
+    foods: ['🍋 Limon', '🥬 Çilek', '🥑 Avokado', '🥗 Quinoa', '🥬 Ispanak', '🍉 Karpuz'],
+    exercise: 'Enerji ve güç zirvede! HIIT, koşu veya yoğun antrenman çok uygun.',
+    activities: ['🏃 HIIT', '🚴 Spin', '🍏 Koşu', '🏊 Yüzme'],
+  },
+  'fertile-post': {
+    nutrition: 'Progesteronu destekleyen gıdalar tüketin. B6 vitamini ve magnezyum önemli.',
+    foods: ['🥗 Tavuk', '🥒 Bezelye', '🍌 Muz', '🥐 Tam Buğday', '🥚 Patlıcan'],
+    exercise: 'Orta yoğunlukta egzersiz idealdir. Pilates ve yoga harika.',
+    activities: ['🏘️ Pilates', '🧘 Yoga', '🚶 Yürüyüş', '🤺 Esneme'],
+  },
+  luteal: {
+    nutrition: 'PMS semptomlarını azaltmak için magnezyum, B vitamini ve kompleks karbonhidrat alın.',
+    foods: ['🍫 Bitter Çiko la ta', '🥦 ×spanak', '🍠 Tatlı Patates', '🥑 Avokado', '🍌 Muz', '🥜 Fındık'],
+    exercise: 'Hafif ve rahatlatıcı hareketler tercih edin. Yoğun antrenman hormonal dengesizliği artırabilir.',
+    activities: ['🧘 Yin Yoga', '🚶 Yürüyüş', '💤 Meditasyon', '🧑‍🦱 Nefes Eg.'],
+  },
+};
+
+function renderPhaseTips(phase) {
+  const tips = PHASE_TIPS[phase] || PHASE_TIPS.follicular;
+
+  document.getElementById('tip-nutrition-text').textContent = tips.nutrition;
+  const foodsEl = document.getElementById('tip-foods');
+  foodsEl.innerHTML = tips.foods.map(f => `<span class="tip-tag food-tag">${f}</span>`).join('');
+
+  document.getElementById('tip-exercise-text').textContent = tips.exercise;
+  const actsEl = document.getElementById('tip-activities');
+  actsEl.innerHTML = tips.activities.map(a => `<span class="tip-tag activity-tag">${a}</span>`).join('');
+}
+
+// ─── BROWSER NOTIFICATIONS ──────────────────────────────────
+async function requestNotifications() {
+  if (!('Notification' in window)) {
+    showToast('⚠️ Tarayıcınız bildirimleri desteklemiyor.');
+    return;
+  }
+  if (Notification.permission === 'granted') {
+    showToast('✅ Bildirimler zaten aktif!');
+    document.getElementById('notif-btn').classList.add('active');
+    scheduleNotifications();
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    document.getElementById('notif-btn').classList.add('active');
+    showToast('🔔 Bildirimler aktif! Fertil dönemde sizi uyaracaz.');
+    scheduleNotifications();
+  } else {
+    showToast('❌ Bildirim izni verilmedi.');
+  }
+}
+
+function scheduleNotifications() {
+  const cd = getCycleData();
+  if (!cd || Notification.permission !== 'granted') return;
+
+  if (cd.phase === 'ovulation') {
+    new Notification('🥊 LunaCycle – Yumurtlama Günü!', {
+      body: `Bugün yumurtlama gününüz ${settings.userName}! ${
+        settings.goal === 'avoid' ? 'Lütfen korunun.' :
+        settings.goal === 'conceive' ? 'Hamile kalmak için en ideal gün!' :
+        'Hamilelik riski çok yüksek.'}`,
+      icon: '🌙',
+    });
+  } else if (cd.phase === 'fertile-pre' && cd.daysToOvulation <= 2) {
+    new Notification('🔥 LunaCycle – Yumurtlama Yaklışıyor!', {
+      body: `${settings.userName}, ${cd.daysToOvulation} gün sonra yumurtlama bekleniyor. Fertil dönemdesiniz!`,
+      icon: '🌙',
+    });
+  }
+}
+
+// Patch renderHome to use name + motivation + tips
+const _origRenderHome = renderHome;
+function renderHome() {
+  _origRenderHome();
+
+  // Greeting with name
+  const name = settings.userName || 'Nazlı';
+  const greetEl = document.getElementById('greeting-title');
+  if (greetEl) greetEl.textContent = `Merhaba, ${name}! 💕`;
+  const sidebarName = document.getElementById('user-name-sidebar');
+  if (sidebarName) sidebarName.textContent = name;
+
+  // Motivation & tips
+  const cd = getCycleData();
+  const phase = cd ? cd.phase : 'follicular';
+  renderMotivation(phase);
+  renderPhaseTips(phase);
+  renderWaterTracker();
+
+  // Mark notif button if already granted
+  if (Notification.permission === 'granted') {
+    document.getElementById('notif-btn')?.classList.add('active');
+  }
+}
